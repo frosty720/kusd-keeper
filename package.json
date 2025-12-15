@@ -1,0 +1,54 @@
+{
+  "name": "kusd-keeper",
+  "version": "1.0.0",
+  "description": "KUSD Auction Keeper - Liquidation and auction participation bot for KalyChain",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "kick-only": "ts-node src/index.ts --mode kick",
+    "bid-only": "ts-node src/index.ts --mode bid",
+    "monitor": "ts-node src/utils/monitor.ts"
+  },
+  "keywords": [
+    "keeper",
+    "auction",
+    "liquidation",
+    "defi",
+    "stablecoin",
+    "kusd",
+    "kalychain",
+    "makerdao"
+  ],
+  "author": "KUSD Team",
+  "license": "MIT",
+  "dependencies": {
+    "ethers": "^6.8.0",
+    "dotenv": "^16.3.1",
+    "winston": "^3.10.0",
+    "node-cron": "^3.0.2",
+    "axios": "^1.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/node-cron": "^3.0.8",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.1",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "jest": "^29.7.0",
+    "@types/jest": "^29.5.0",
+    "ts-jest": "^29.1.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
+
