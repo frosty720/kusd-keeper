@@ -32,7 +32,7 @@ const PAIR_ABI = [
 ];
 
 // Safety constants
-const MIN_POOL_LIQUIDITY_USD = 100n * 1000000n; // 100 USDC minimum (6 decimals)
+const MIN_POOL_LIQUIDITY_USD = 10n * 1000000n; // 10 USDC minimum (6 decimals) - lowered for testing
 const MAX_TRADE_PERCENT_OF_POOL = 10; // Max 10% of pool per trade
 
 
