@@ -1,219 +1,192 @@
 # KUSD Keeper
 
-TypeScript-based auction keeper for the KUSD stablecoin system on KalyChain.
+TypeScript-based keeper bot for the KUSD stablecoin system on KalyChain. Earn rewards by helping maintain the health and stability of KUSD.
 
-## Overview
+## What is a Keeper?
 
-The KUSD Keeper monitors vaults and participates in liquidation auctions to maintain the health of the KUSD stablecoin system. **Both liquidation triggering AND auction bidding are CRITICAL for the KUSD system to function correctly.**
+Keepers are **independent operators** who run bots to maintain decentralized protocols. Anyone can run this keeper software to:
 
-### Features
+- **Earn money** by performing critical system functions
+- **Help maintain KUSD's $1 peg** through arbitrage
+- **Keep the system healthy** by liquidating risky vaults
+- **Participate in auctions** to buy collateral at a discount
+
+The KUSD system is designed to have **multiple competing keepers** — this ensures fast responses and decentralized maintenance.
+
+## Earning Opportunities
+
+| Service | How You Earn | Capital Needed |
+|---------|--------------|----------------|
+| **Liquidation Triggering** | 100 KUSD + 2% of debt per liquidation | Only KLC for gas |
+| **Collateral Auctions** | Buy collateral below market price | KUSD in Vat |
+| **Peg Arbitrage** | Profit from KUSD price deviations | USDC + KUSD |
+| **Surplus Auctions** | Buy KUSD with sKLC at discount | sKLC tokens |
+| **Debt Auctions** | Accept sKLC for KUSD at premium | KUSD in Vat |
+
+## Features
 
 - **Vault Monitoring**: Tracks all vaults and detects unsafe positions
-- **Liquidation Triggering**: Calls `Dog.bark()` to liquidate unsafe vaults (earns 100 KUSD + 2% of debt)
-- **Collateral Auction Participation**: Bids on Clipper auctions when profitable (earns arbitrage profit)
-- **Surplus Auction Participation**: Bids on Flapper auctions (buys KUSD with sKLC)
-- **Debt Auction Participation**: Bids on Flopper auctions (accepts newly minted sKLC for KUSD)
-- **Price Oracle Integration**: Fetches real-time prices from KUSD oracles
-- **Multi-Collateral Support**: Handles WBTC, WETH, USDT, USDC, and DAI
-- **Vat Balance Management**: Automatically manages KUSD balance between wallet and Vat
-- **Gas Optimization**: KalyChain-specific gas configuration
+- **Liquidation Triggering**: Calls `Dog.bark()` to liquidate unsafe vaults
+- **Collateral Auction Participation**: Bids on Clipper auctions when profitable
+- **Peg Stability Arbitrage**: Trades KUSD↔USDC to maintain the $1 peg
+- **Surplus/Debt Auctions**: Participates in Flapper and Flopper auctions
+- **Multi-Collateral Support**: WBTC, WETH, USDT, USDC, DAI
 - **Safety Features**: Profit thresholds, emergency stop, comprehensive monitoring
-- **Three Modes**: Full (liquidate + bid), Kick-only, or Bid-only
+
+## Quick Start
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/KalyChain/KUSD.git
+cd KUSD/kusd-keeper
+
+# 2. Install dependencies
+npm install
+
+# 3. Configure your keeper
+cp .env.example .env
+nano .env  # Add your private key and settings
+
+# 4. Build and run
+npm run build
+npm start
+```
+
+See [SETUP.md](./SETUP.md) for detailed setup instructions.
+
+## How Peg Arbitrage Works
+
+The Peg Stability Module (PSM) allows 1:1 swaps between KUSD and USDC. When KUSD deviates from $1, arbitrage opportunities appear:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    Peg Arbitrage Flow                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   KUSD < $1 (e.g., $0.98)              KUSD > $1 (e.g., $1.02)  │
+│   ┌─────────────────────┐              ┌─────────────────────┐  │
+│   │ 1. Buy KUSD on DEX  │              │ 1. Mint KUSD at PSM │  │
+│   │    for $0.98        │              │    for $1 USDC      │  │
+│   │ 2. Redeem at PSM    │              │ 2. Sell on DEX      │  │
+│   │    for $1 USDC      │              │    for $1.02        │  │
+│   │ 3. Profit: ~2%      │              │ 3. Profit: ~2%      │  │
+│   └─────────────────────┘              └─────────────────────┘  │
+│   → KUSD price rises                   → KUSD price falls       │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+**Multiple keepers compete** for these opportunities — first one wins. This competition ensures the peg is restored quickly.
+
+## How Liquidations Work
+
+When a vault becomes undercollateralized:
+
+1. **Keeper detects** unsafe vault (collateral value < debt × liquidation ratio)
+2. **Keeper calls** `Dog.bark()` to trigger liquidation
+3. **Keeper earns** 100 KUSD + 2% of the debt as incentive
+4. **Collateral auction** starts — keepers can bid to buy at discount
+
+## Capital Requirements
+
+| Mode | What You Need | Recommended Amount |
+|------|---------------|-------------------|
+| **Liquidations only** | KLC for gas | 0.1+ KLC |
+| **Auction bidding** | KUSD in Vat | 10,000+ KUSD |
+| **Peg arbitrage** | USDC + KUSD | 100+ USDC, 100+ KUSD |
+| **Full mode** | All of the above | Start small, scale up |
+
+## Configuration
+
+All settings are in your `.env` file. Key options:
+
+```env
+# Operating Mode
+MODE=full              # full, kick, or bid
+
+# Peg Arbitrage (the main money-maker for new keepers)
+ENABLE_PEG_ARB=true
+MAX_ARB_AMOUNT=10000000          # Max USDC per trade (6 decimals = 10 USDC)
+MIN_ARB_PROFIT_PERCENTAGE=0.5    # Only trade if profit > 0.5%
+MAX_TRADE_PERCENT_OF_POOL=10     # Max 10% of pool liquidity per trade
+
+# Liquidations & Auctions
+MIN_PROFIT_PERCENTAGE=5          # Min profit % for auction bids
+CHECK_INTERVAL=30000             # Check every 30 seconds
+```
+
+See [.env.example](./.env.example) for all options.
+
+## Running the Keeper
+
+### Development
+```bash
+npm run dev
+```
+
+### Production (PM2 recommended)
+```bash
+npm run build
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup  # Auto-start on boot
+```
+
+### Monitoring
+```bash
+pm2 status
+pm2 logs kusd-keeper
+```
 
 ## Architecture
 
 ```
 kusd-keeper/
 ├── src/
-│   ├── index.ts              # Main entry point
-│   ├── config/
-│   │   ├── config.ts         # Configuration management
-│   │   └── contracts.ts      # Contract addresses and ABIs
-│   ├── monitors/
-│   │   ├── VaultMonitor.ts   # Monitors vaults for liquidations
-│   │   ├── AuctionMonitor.ts # Monitors collateral auctions
-│   │   ├── FlapMonitor.ts    # Monitors surplus auctions
-│   │   └── FlopMonitor.ts    # Monitors debt auctions
-│   ├── executors/
-│   │   ├── LiquidationExecutor.ts  # Executes Dog.bark()
-│   │   ├── BiddingExecutor.ts      # Executes Clipper.take()
-│   │   ├── FlapExecutor.ts         # Executes Flapper.tend()
-│   │   └── FlopExecutor.ts         # Executes Flopper.dent()
+│   ├── index.ts                    # Main entry point
 │   ├── services/
-│   │   ├── ContractService.ts      # Contract interaction layer
-│   │   └── PriceService.ts         # Price feed integration
-│   ├── utils/
-│   │   ├── logger.ts         # Winston logger
-│   │   ├── calculations.ts   # Math utilities
-│   │   ├── vatBalance.ts     # Vat balance management
-│   │   └── monitor.ts        # Health monitoring
-│   └── types/
-│       └── index.ts          # TypeScript types
-└── abis/                     # Contract ABIs
+│   │   ├── PegKeeperService.ts     # Peg arbitrage logic
+│   │   ├── ContractService.ts      # Contract interactions
+│   │   └── PriceService.ts         # Price feeds
+│   ├── monitors/
+│   │   ├── VaultMonitor.ts         # Vault health monitoring
+│   │   └── AuctionMonitor.ts       # Auction monitoring
+│   ├── executors/
+│   │   ├── LiquidationExecutor.ts  # Triggers Dog.bark()
+│   │   └── BiddingExecutor.ts      # Bids on auctions
+│   └── config/
+│       └── contracts.ts            # Contract addresses
+└── .env                            # Your configuration
 ```
-
-## Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Copy environment file
-cp .env.example .env
-
-# Edit .env with your configuration
-nano .env
-```
-
-## Configuration
-
-Edit `.env` file:
-
-```env
-# Required
-PRIVATE_KEY=your_private_key_here
-RPC_URL=https://testnetrpc.kalychain.io/rpc
-
-# Optional
-MODE=full  # full, kick, or bid
-MIN_PROFIT_PERCENTAGE=5
-CHECK_INTERVAL=30000
-```
-
-## Usage
-
-### Run Full Keeper (Liquidation + Bidding)
-```bash
-npm run dev
-```
-
-### Run Liquidation Only
-```bash
-npm run kick-only
-```
-
-### Run Bidding Only
-```bash
-npm run bid-only
-```
-
-### Build for Production
-```bash
-npm run build
-npm start
-```
-
-### Monitor Health
-```bash
-npm run monitor
-```
-
-## How It Works
-
-### 1. Vault Monitoring
-- Listens to `Vat.frob` events to track all vaults
-- Loads historical vaults from past 100k blocks
-- Calculates collateralization ratios in real-time
-- Detects unsafe vaults (collateral < debt * liquidation ratio)
-
-### 2. Liquidation Triggering
-- Calls `Dog.bark(ilk, urn, keeper)` for unsafe vaults
-- **Earns incentive: 100 KUSD + 2% of debt being liquidated**
-- Ensures room in Dog.Hole and ilk.hole before liquidating
-- Starts Dutch auction in Clipper contract
-
-### 3. Collateral Auction Participation (Clipper)
-- Monitors `Dog.Bark` events for new auctions
-- Tracks active auctions and calculates current prices
-- Fetches market prices from KUSD oracles
-- Calculates profitability (market price vs auction price)
-- Calls `Clipper.take(id, amt, max, who, data)` to bid
-- Only bids when profit > MIN_PROFIT_PERCENTAGE
-- **Earns arbitrage profit from buying below market price**
-
-### 4. Surplus Auction Participation (Flapper)
-- Monitors `Flapper.Kick` events for new surplus auctions
-- Tracks active Flap auctions
-- Calculates minimum bid increase (beg parameter)
-- Calls `Flapper.tend(id, lot, bid)` to bid MORE sKLC for same KUSD
-- **Buys KUSD with sKLC tokens (sKLC gets burned)**
-- Requires sKLC balance in keeper wallet
-
-### 5. Debt Auction Participation (Flopper)
-- Monitors `Flopper.Kick` events for new debt auctions
-- Tracks active Flop auctions
-- Calculates maximum lot decrease (beg parameter)
-- Calls `Flopper.dent(id, lot, bid)` to accept LESS sKLC for same KUSD
-- **Accepts newly minted sKLC in exchange for KUSD**
-- Requires KUSD balance in Vat
-
-### 6. Price Oracle Integration
-- Connects to deployed KUSD oracle contracts
-- Fetches real-time prices for all collateral types
-- Caches prices for 30 seconds to reduce RPC calls
-- Uses prices to calculate auction profitability
 
 ## Safety Features
 
-- **Profit Threshold**: Only bids when profitable
-- **Gas Price Limits**: Won't execute if gas too high
-- **Emergency Stop**: Can halt operations via config
-- **Max Collateral Limits**: Caps exposure per auction
-- **Comprehensive Logging**: All actions logged
+- **Profit thresholds** — Only executes profitable trades
+- **Pool size limits** — Won't trade more than X% of liquidity
+- **Slippage protection** — Reverts if price moves too much
+- **Cooldown periods** — Prevents rapid-fire trading
+- **Emergency stop** — Halt all operations instantly
+- **Comprehensive logging** — All actions logged for review
 
-## Deployment
+## FAQ
 
-### PM2 (Recommended)
-```bash
-npm run build
-pm2 start dist/index.js --name kusd-keeper
-pm2 save
-```
+**Q: Can multiple people run this keeper?**
+A: Yes! The system is designed for multiple competing keepers. First one to execute wins.
 
-### Docker
-```bash
-docker build -t kusd-keeper .
-docker run -d --env-file .env kusd-keeper
-```
+**Q: Do I need to deposit into the PSM pocket?**
+A: No. The pocket is DAO-controlled. All keepers share the same PSM liquidity.
 
-## Monitoring
+**Q: What if my transaction fails?**
+A: Usually means another keeper beat you. This is normal and expected.
 
-Check keeper status:
-```bash
-pm2 status
-pm2 logs kusd-keeper
-```
+**Q: How much can I earn?**
+A: Depends on market activity. More peg deviations and liquidations = more opportunities.
 
-## Capital Requirements
+## Links
 
-### For Liquidation Triggering (Kick Mode)
-- **Only needs KLC for gas**
-- Recommended: 0.1 KLC minimum
-- Each liquidation costs ~0.001 KLC (~62,374 gas at 21 Gwei)
-- **Earns: 100 KUSD + 2% of debt per liquidation**
-
-### For Auction Bidding (Bid Mode)
-- **Needs KUSD in Vat to bid**
-- Recommended: 10,000 - 50,000 KUSD to start
-- More capital = more opportunities
-- **Earns: Arbitrage profit from buying below market**
-
-### For Full Mode (Recommended)
-- Needs both KLC for gas AND KUSD in Vat
-- Earns from BOTH liquidation incentives AND auction profits
-- Most profitable and helps the system the most
-
-## Troubleshooting
-
-### Keeper not detecting vaults
-- Check RPC connection
-- Verify contract addresses
-- Ensure wallet has KLC for gas
-
-### Bids not executing
-- Check KUSD balance in Vat
-- Verify MIN_PROFIT_PERCENTAGE is reasonable
-- Check gas price limits
+- [Detailed Setup Guide](./SETUP.md)
+- [KUSD Documentation](https://docs.kalychain.io/kusd)
+- [KalyChain Explorer](https://kalyscan.io)
 
 ## License
 
