@@ -12,8 +12,8 @@ Complete guide to set up and run the KUSD Keeper on KalyChain. Follow these step
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/KalyChain/KUSD.git
-cd KUSD/kusd-keeper
+git clone https://github.com/KalyCoinProject/kusd-keeper.git
+cd kusd-keeper
 ```
 
 ## Step 2: Install Dependencies

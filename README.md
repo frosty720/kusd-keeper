@@ -37,8 +37,8 @@ The KUSD system is designed to have **multiple competing keepers** — this ensu
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/KalyChain/KUSD.git
-cd KUSD/kusd-keeper
+git clone https://github.com/KalyCoinProject/kusd-keeper.git
+cd kusd-keeper
 
 # 2. Install dependencies
 npm install
